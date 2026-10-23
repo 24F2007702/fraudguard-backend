@@ -129,3 +129,14 @@ def stats():
     rows = db.execute("SELECT key, COUNT(*) c FROM reports WHERE kind='scam' AND ts>? GROUP BY key ORDER BY c DESC LIMIT 20",
                       (time.time() - 7 * 86400,)).fetchall()
     return {"top_reported": [{"key": k, "reports": c} for k, c in rows]}
+
+import sqlite3
+
+@app.get("/reports")
+def reports(limit: int = 2000):
+    con = sqlite3.connect("fraudguard.db")
+    rows = con.execute(
+        "SELECT key, kind, ts, reporter FROM reports ORDER BY ts DESC LIMIT ?", (limit,)
+    ).fetchall()
+    con.close()
+    return [{"key": r[0], "kind": r[1], "ts": r[2], "reporter": r[3]} for r in rows]
